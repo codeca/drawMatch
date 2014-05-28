@@ -1,7 +1,11 @@
-/*globals Point, requestAnimationFrame*/
+/*globals Point, requestAnimationFrame, Glyphs, patterns*/
 "use strict"
 
+var logEl
+
 addEventListener("load", function () {
+	logEl = document.getElementById("log")
+	
 	// Create a reference to outer canvas
 	var bigCanvas = document.getElementById("canvas")
 	var bigContext = bigCanvas.getContext("2d")
@@ -105,6 +109,8 @@ function touchBegan(p) {
 	points = [p]
 	allPoints = [p]
 	anchor = null
+	
+	matchDraw()
 }
 
 function touchMoved(p) {
@@ -114,7 +120,7 @@ function touchMoved(p) {
 	// Store the raw point
 	allPoints.push(p)
 	
-	if (p.getSquareDistance(last) > 50*50) {
+	if (p.getSquareDistance(last) > 25*25) {
 		// Respect a minimum distance
 		
 		if (anchor) {
@@ -148,44 +154,115 @@ function touchMoved(p) {
 		
 		anchor = last
 		points.push(p)
+		matchDraw()
 	}
 }
 
 function touchEnded(p) {
 	allPoints.push(p)
 	points.push(p)
-	console.log("Selected %d of %d acquired points (%d%%)", points.length, allPoints.length, Math.round(100*points.length/allPoints.length))
+	
+	matchDraw()
 }
 
-function drawRect(canvas, context, time) {
-	var i
-	context.beginPath()
-	context.strokeStyle = "rgba(0, 0, 0, .5)"
-	context.lineWidth = 3
-	for (i=0; i<points.length; i++) {
-		if (i)
-			context.lineTo(points[i].x, points[i].y)
-		else
-			context.moveTo(points[i].x, points[i].y)
-	}
-	context.stroke()
+// Debug draw
+var dx = (568-320)/2
+
+// Run the draw matching algorithm
+var best
+function matchDraw() {
+	//var points = allPoints
+	if (points.length < 2)
+		return
 	
-	for (i=0; i<points.length; i++) {
+	// Store the state for every candidate (pattern)
+	// Each element is an object with keys:
+	// pattern: a Glyph instance
+	// coverage: an array of the the segments of the model drawn by the user
+	// error: error score for each pattern (lesser is better)
+	var candidates = patterns.map(function (pattern) {
+		return {
+			pattern: pattern,
+			coverage: [],
+			error: 0
+		}
+	})
+	
+	// For each segment drawn by the user and glyph
+	points.forEach(function (point, i) {
+		if (!i) return
+		var point2 = points[i-1]
+		candidates.forEach(function (candidate) {
+			var match = candidate.pattern.matchSegment(point, point2)
+			candidate.error += match.error
+			var segment = match.segment
+			if (candidate.coverage.indexOf(segment) == -1)
+				candidate.coverage.push(segment)
+		})
+	})
+	
+	// Get the best
+	var epsilon = 0.5 // coverage threshold
+	best = candidates.filter(function (candidate) {
+		candidate.coverage = candidate.coverage.length/(candidate.pattern.points.length-1)
+		candidate.realError = candidate.error/candidate.coverage
+		return candidate.coverage >= epsilon
+	}).sort(function (a, b) {
+		return a.realError-b.realError
+	})[0]
+	
+	logEl.innerHTML = ""
+	candidates.sort(function (a, b) {
+		return a.realError-b.realError
+	})
+	var max = candidates[candidates.length-1].realError
+	var table = document.createElement("table")
+	logEl.appendChild(table)
+	table.innerHTML = "<tr><td>Glyph</td><td>Match</td><td>Coverage</td><td>Error</td></tr>"
+	candidates.forEach(function (candidate) {
+		var row = table.insertRow()
+		
+		row.insertCell().textContent = candidate.pattern.name
+		row.insertCell().textContent = Math.round(100-100*candidate.realError/max)+"%"
+		row.insertCell().textContent = Math.round(100*candidate.coverage)+"%"
+		row.insertCell().textContent = Math.log(candidate.error).toFixed(2)
+	})
+}
+
+// Draw loop
+function drawRect(canvas, context) {
+	drawLine(context, points, "rgba(0, 0, 0, .5)", 3)
+	drawDots(context, points, "black", 6)
+	drawLine(context, allPoints, "red", 1)
+	
+	context.strokeRect(dx, 0, 320, 320)
+	
+	if (best)
+		drawLine(context, best.pattern.globalPoints, "blue", 2)
+}
+
+// Draw a line through the given points
+function drawLine(context, points, color, width) {
+	context.beginPath()
+	points.forEach(function (p, i) {
+		if (i)
+			context.lineTo(p.x, p.y)
+		else
+			context.moveTo(p.x, p.y)
+	})
+	
+	context.strokeStyle = color
+	context.lineWidth = width
+	context.stroke()
+}
+
+// Draw dots in the given points coordinates
+function drawDots(context, points, color, size) {
+	context.fillStyle = color
+	
+	points.forEach(function (p) {
 		context.beginPath()
-		context.arc(points[i].x, points[i].y, 3, 0, 2*Math.PI)
+		context.arc(p.x, p.y, size/2, 0, 2*Math.PI)
 		context.fill()
-	}
-	
-	context.beginPath()
-	context.strokeStyle = "red"
-	context.lineWidth = 1
-	for (i=0; i<allPoints.length; i++) {
-		if (i)
-			context.lineTo(allPoints[i].x, allPoints[i].y)
-		else
-			context.moveTo(allPoints[i].x, allPoints[i].y)
-	}
-	context.stroke()
-	
-	context.strokeRect((568-320)/2, 0, 320, 320)
+	})
 }
