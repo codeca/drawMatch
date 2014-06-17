@@ -1,4 +1,4 @@
-/*globals Point, requestAnimationFrame, Glyphs, patterns*/
+/*globals Point, requestAnimationFrame, patterns, Glyph*/
 "use strict"
 
 var logEl
@@ -113,6 +113,7 @@ function touchBegan(p) {
 	matchDraw()
 }
 
+var simplify = false
 function touchMoved(p) {
 	var last = points[points.length-1]
 	var angle1, angle2, dangle, newAngle, dist1, dist2, dist
@@ -120,10 +121,10 @@ function touchMoved(p) {
 	// Store the raw point
 	allPoints.push(p)
 	
-	if (p.getSquareDistance(last) > 25*25) {
+	if (p.getSquareDistance(last) > 0) {
 		// Respect a minimum distance
 		
-		if (anchor) {
+		if (anchor && simplify) {
 			angle1 = anchor.getAngleTo(last)
 			angle2 = last.getAngleTo(p)
 			dangle = Math.abs((angle1-angle2)%(2*Math.PI))
@@ -145,10 +146,6 @@ function touchMoved(p) {
 				
 				p.x += dist*Math.cos(newAngle+Math.PI/2)
 				p.y += dist*Math.sin(newAngle+Math.PI/2)
-			} else {
-				// Don't simplify
-				
-				
 			}
 		}
 		
@@ -165,47 +162,57 @@ function touchEnded(p) {
 	matchDraw()
 }
 
-// Debug draw
-var dx = (568-320)/2
-
 // Run the draw matching algorithm
-var best
+var best, best2, userDraw
 function matchDraw() {
-	//var points = allPoints
+	var points = allPoints
 	if (points.length < 2)
 		return
+	
+	userDraw = new Glyph("user", points)
 	
 	// Store the state for every candidate (pattern)
 	// Each element is an object with keys:
 	// pattern: a Glyph instance
-	// coverage: an array of the the segments of the model drawn by the user
+	// coverage: an array, coverage[segmentId] = coveragePercentage
 	// error: error score for each pattern (lesser is better)
 	var candidates = patterns.map(function (pattern) {
+		var coverages = [], i
+		for (i=1; i<pattern.points.length; i++)
+			coverages.push(0)
 		return {
 			pattern: pattern,
-			coverage: [],
+			coverages: coverages,
 			error: 0
 		}
 	})
 	
 	// For each segment drawn by the user and glyph
-	points.forEach(function (point, i) {
+	userDraw.points.forEach(function (point, i) {
 		if (!i) return
-		var point2 = points[i-1]
+		var point2 = userDraw.points[i-1]
 		candidates.forEach(function (candidate) {
 			var match = candidate.pattern.matchSegment(point, point2)
 			candidate.error += match.error
-			var segment = match.segment
-			if (candidate.coverage.indexOf(segment) == -1)
-				candidate.coverage.push(segment)
+			candidate.coverages[match.segment] += match.coverage
 		})
 	})
 	
 	// Get the best
-	var epsilon = 0.5 // coverage threshold
-	best = candidates.filter(function (candidate) {
-		candidate.coverage = candidate.coverage.length/(candidate.pattern.points.length-1)
+	var epsilon = 0.75 // coverage threshold
+	var n = 2 // error penalty at epsilon
+	var a = -(n-1)/((1-epsilon)*(1-epsilon))
+	candidates.forEach(function (candidate) {
+		var coverage = 0, i, totalSize = 0, segmentSize, points = candidate.pattern.points
+		for (i=0; i<candidate.coverages.length; i++) {
+			segmentSize = points[i].getDistance(points[i+1])
+			coverage += Math.min(1, candidate.coverages[i])*segmentSize
+			totalSize += segmentSize
+		}
+		candidate.coverage = coverage/totalSize
 		candidate.realError = candidate.error/candidate.coverage
+	})
+	best = candidates.filter(function (candidate) {
 		return candidate.coverage >= epsilon
 	}).sort(function (a, b) {
 		return a.realError-b.realError
@@ -215,30 +222,38 @@ function matchDraw() {
 	candidates.sort(function (a, b) {
 		return a.realError-b.realError
 	})
-	var max = candidates[candidates.length-1].realError
 	var table = document.createElement("table")
 	logEl.appendChild(table)
-	table.innerHTML = "<tr><td>Glyph</td><td>Match</td><td>Coverage</td><td>Error</td></tr>"
+	table.innerHTML = "<tr><td>Glyph</td><td>Coverage</td><td>Error</td><td>Real Error</td></tr>"
 	candidates.forEach(function (candidate) {
-		var row = table.insertRow()
+		var row = table.insertRow(-1)
+		if (candidate.coverage < epsilon)
+			row.style.color = "gray"
 		
-		row.insertCell().textContent = candidate.pattern.name
-		row.insertCell().textContent = Math.round(100-100*candidate.realError/max)+"%"
-		row.insertCell().textContent = Math.round(100*candidate.coverage)+"%"
-		row.insertCell().textContent = Math.log(candidate.error).toFixed(2)
+		row.insertCell(-1).textContent = candidate.pattern.name
+		row.insertCell(-1).textContent = Math.round(100*candidate.coverage)+"%"
+		row.insertCell(-1).textContent = candidate.error.toFixed(3)
+		row.insertCell(-1).textContent = candidate.coverage<epsilon ? 0 : candidate.realError.toFixed(3)
 	})
 }
 
 // Draw loop
 function drawRect(canvas, context) {
-	drawLine(context, points, "rgba(0, 0, 0, .5)", 3)
-	drawDots(context, points, "black", 6)
-	drawLine(context, allPoints, "red", 1)
+	if (best) {
+		drawLine(context, best.pattern.globalPoints, "rgba(0, 0, 255, .5)", 2)
+		context.fillStyle = "black"
+		best.coverages.forEach(function (coverage, i) {
+			var A = best.pattern.globalPoints[i]
+			var B = best.pattern.globalPoints[i+1]
+			var x = (A.x+B.x)/2
+			var y = (A.y+B.y)/2
+			coverage = Math.round(100*Math.min(1, coverage))
+			context.fillText(coverage, x, y)
+		})
+	}
 	
-	context.strokeRect(dx, 0, 320, 320)
-	
-	if (best)
-		drawLine(context, best.pattern.globalPoints, "blue", 2)
+	drawLine(context, points, "rgba(0, 0, 0, 0.5)", 5)
+	drawLine(context, points, "red", 3)
 }
 
 // Draw a line through the given points
@@ -253,6 +268,7 @@ function drawLine(context, points, color, width) {
 	
 	context.strokeStyle = color
 	context.lineWidth = width
+	context.lineJoin = "round"
 	context.stroke()
 }
 
