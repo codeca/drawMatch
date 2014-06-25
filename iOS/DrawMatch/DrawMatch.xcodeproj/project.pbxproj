@@ -7,12 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		980FFF9B195B0A2B00D6A381 /* Glyph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 980FFF9A195B0A2B00D6A381 /* Glyph.swift */; };
+		980FFF9D195B119A00D6A381 /* Candidate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 980FFF9C195B119A00D6A381 /* Candidate.swift */; };
 		98501F3819507732001704C2 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98501F3719507732001704C2 /* AppDelegate.swift */; };
 		98501F3A19507732001704C2 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98501F3919507732001704C2 /* ViewController.swift */; };
 		98501F3D19507732001704C2 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 98501F3B19507732001704C2 /* Main.storyboard */; };
 		98501F3F19507732001704C2 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 98501F3E19507732001704C2 /* Images.xcassets */; };
 		98501F4B19507732001704C2 /* DrawMatchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98501F4A19507732001704C2 /* DrawMatchTests.swift */; };
 		98501F55195077B7001704C2 /* DrawView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98501F54195077B7001704C2 /* DrawView.swift */; };
+		98501F57195AFE54001704C2 /* DrawMatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98501F56195AFE54001704C2 /* DrawMatch.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -26,6 +29,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		980FFF9A195B0A2B00D6A381 /* Glyph.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Glyph.swift; sourceTree = "<group>"; };
+		980FFF9C195B119A00D6A381 /* Candidate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Candidate.swift; sourceTree = "<group>"; };
 		98501F3219507732001704C2 /* DrawMatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DrawMatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		98501F3619507732001704C2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		98501F3719507732001704C2 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -36,6 +41,7 @@
 		98501F4919507732001704C2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		98501F4A19507732001704C2 /* DrawMatchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawMatchTests.swift; sourceTree = "<group>"; };
 		98501F54195077B7001704C2 /* DrawView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DrawView.swift; sourceTree = "<group>"; };
+		98501F56195AFE54001704C2 /* DrawMatch.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DrawMatch.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -83,6 +89,9 @@
 				98501F3E19507732001704C2 /* Images.xcassets */,
 				98501F3519507732001704C2 /* Supporting Files */,
 				98501F54195077B7001704C2 /* DrawView.swift */,
+				98501F56195AFE54001704C2 /* DrawMatch.swift */,
+				980FFF9A195B0A2B00D6A381 /* Glyph.swift */,
+				980FFF9C195B119A00D6A381 /* Candidate.swift */,
 			);
 			path = DrawMatch;
 			sourceTree = "<group>";
@@ -212,7 +221,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				98501F3A19507732001704C2 /* ViewController.swift in Sources */,
+				98501F57195AFE54001704C2 /* DrawMatch.swift in Sources */,
 				98501F3819507732001704C2 /* AppDelegate.swift in Sources */,
+				980FFF9D195B119A00D6A381 /* Candidate.swift in Sources */,
+				980FFF9B195B0A2B00D6A381 /* Glyph.swift in Sources */,
 				98501F55195077B7001704C2 /* DrawView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -403,6 +415,7 @@
 				98501F5019507732001704C2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		98501F5119507732001704C2 /* Build configuration list for PBXNativeTarget "DrawMatchTests" */ = {
 			isa = XCConfigurationList;
@@ -411,6 +424,7 @@
 				98501F5319507732001704C2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
